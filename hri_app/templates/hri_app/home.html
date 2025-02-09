@@ -1,0 +1,90 @@
+{% extends 'hri_app/base.html' %}
+{% block content %}
+<h1>Welcome to the HRI Experiment</h1>
+<div class="home-content">
+    {% if user.is_authenticated %}
+        <p>Hello, {{ user.username }}!</p>
+        
+        <h2>Choose an Animation:</h2>
+        <div class="animation-options">
+            <a href="{% url 'animation' animation_type='blink' %}" class="animation-btn">Blinking Animation</a>
+            <a href="{% url 'animation' animation_type='wave' %}" class="animation-btn">Slow Wave Animation</a>
+        </div>
+
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+    {% else %}
+        <p>Please log in to participate in the experiment.</p>
+        <div class="auth-links">
+            <a href="{% url 'admin_login' %}">Admin Login</a> |
+            <a href="{% url 'experimentee_login' %}">Experimentee Login</a> |
+            <a href="{% url 'signup' %}">Sign Up</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .home-content {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .animation-options {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .animation-btn {
+        display: inline-block;
+        padding: 12px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.3s ease-in-out;
+    }
+
+    .animation-btn:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+    }
+
+    .logout-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.3s ease-in-out;
+    }
+
+    .logout-btn:hover {
+        background-color: #c82333;
+        transform: scale(1.05);
+    }
+
+    .auth-links {
+        margin-top: 10px;
+    }
+
+    .auth-links a {
+        color: #007BFF;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'hri_app/base.html' %}
+{% block content %}
+<h1>{{ animation_type }} Animation</h1>
+<div class="led-strip {{ animation_type }}">
+    {% for _ in ""|ljust:num_leds %}
+        <div class="led"></div>
+    {% endfor %}
+</div>
+<div class="navigation">
+    <a href="{% url 'feedback' animation_type=animation_type %}" class="feedback-btn">Give Feedback</a>
+    <a href="{% url 'home' %}" class="back-btn">Back to Home</a>
+</div>
+
+<style>
+    .led-strip {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px auto;
+        max-width: 600px; /* Center the LED strip */
+    }
+    .led {
+        width: 20px;
+        height: 20px;
+        background-color: black;
+        border-radius: 50%;
+    }
+    @keyframes blink {
+        0%, 100% { background-color: red; }
+        50% { background-color: black; }
+    }
+    @keyframes wave {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0); }
+    }
+    .blink .led {
+        animation: blink 1s infinite;
+    }
+    .wave .led {
+        animation: wave 2s infinite;
+    }
+    .navigation {
+        text-align: center;
+        margin-top: 20px;
+    }
+    .feedback-btn, .back-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        margin: 5px;
+        background-color: #007BFF;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    .feedback-btn:hover, .back-btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
