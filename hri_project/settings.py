@@ -15,7 +15,7 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -26,9 +26,16 @@ SECRET_KEY = 'django-insecure-0d$6tnm%e&u0f&b47c%5ed$&oezu-m0$eey-onbcke9)rf@z6^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '.ngrok-free.app',  # Allow all Ngrok subdomains
+    'toheedazmat.eu.pythonanywhere.com'
+]
 
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',  # Allow all Ngrok subdomains
+]
 # Application definition
 
 INSTALLED_APPS = [
