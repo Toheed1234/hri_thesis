@@ -1,0 +1,204 @@
+<!-- experiment/templates/experiment/instructions.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #2c3639;
+            color: #dcd7c9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 25px;
+            border-radius: 15px;
+            background-color: #3f4e4f;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #a27b5c;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        .admin-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background-color: #a27b5c;
+            color: #dcd7c9;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .admin-button:hover {
+            background-color: #8b6b4f;
+        }
+        .welcome-message {
+            color: #dcd7c9;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        .instruction-image {
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin: 10px auto;
+            display: block;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .sections-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .section {
+            background-color: #2c3639;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .section h2 {
+            color: #a27b5c;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-content {
+            color: #dcd7c9;
+            line-height: 1.4;
+            font-size: 0.95em;
+        }
+        .proceed-button {
+            display: block;
+            width: 200px;
+            margin: 25px auto 0;
+            padding: 12px;
+            background-color: #a27b5c;
+            color: #dcd7c9;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .proceed-button:hover {
+            background-color: #8b6b4f;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .key-point {
+            background-color: #344246;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #a27b5c;
+        }
+        .key-point strong {
+            color: #a27b5c;
+        }
+        .feedback-instructions {
+            list-style-type: none;
+            padding-left: 15px;
+            margin: 10px 0;
+        }
+        .feedback-instructions li {
+            margin: 8px 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .feedback-instructions li strong {
+            color: #a27b5c;
+            font-weight: 500;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // No back button handling needed
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'admin:index' %}" class="admin-button">Admin Panel</a>
+
+        <h1>Experiment Instructions</h1>
+        {% if participant_name %}
+        <div class="welcome-message">Welcome, {{ participant_name }}!</div>
+        {% endif %}
+        
+        <div class="sections-container">
+            <div class="section">
+                <h2>🎯 Purpose</h2>
+                <div class="section-content">
+                    <div class="key-point">
+                        This experiment studies how <strong>LED animations</strong> influence human emotions. Your responses will help improve human-robot interaction systems.
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>💡 Interface Overview</h2>
+                <div class="section-content">
+                    <div class="key-point">
+                        <strong>Left Panel:</strong> Shows LED animations that you'll evaluate
+                    </div>
+                    <div class="key-point">
+                        <strong>Right Panel:</strong> An emotion feedback circle where you can express how the animation makes you feel:
+                        <ul class="feedback-instructions">
+                            <li>Moving <strong>Up</strong>: More energetic, excited, or alert feelings</li>
+                            <li>Moving <strong>Down</strong>: More calm, relaxed, or sleepy feelings</li>
+                            <li>Moving <strong>Right</strong>: More positive, pleasant, or happy feelings</li>
+                            <li>Moving <strong>Left</strong>: More negative, unpleasant, or unhappy feelings</li>
+                        </ul>
+                        Simply click anywhere in the circle that best matches your emotional response!
+                    </div>
+                    {% load static %}
+                    <img src="{% static 'experiment/experiment_interface.png' %}" alt="Experiment Interface" class="instruction-image">
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📝 How to Participate</h2>
+                <div class="section-content">
+                    <div class="key-point">
+                        1. Watch each LED animation carefully
+                    </div>
+                    <div class="key-point">
+                        2. Click on the emotion circle to indicate your feelings about the animation
+                    </div>
+                    <div class="key-point">
+                        3. Click <strong>Next</strong> to proceed after giving feedback, or <strong>Skip</strong> if you prefer not to respond
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form action="{% url 'experiment' %}" method="get">
+            <button type="submit" class="proceed-button">Start Experiment</button>
+        </form>
+    </div>
+</body>
+</html>

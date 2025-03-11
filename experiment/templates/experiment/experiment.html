@@ -1,0 +1,551 @@
+<!-- experiment/templates/experiment/experiment.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background-color: #2c3639;
+            color: #dcd7c9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .led-panel, .feedback-panel {
+            background-color: #3f4e4f;
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #a27b5c;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        .feedback-circle {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            border: 2px solid #a27b5c;
+            border-radius: 50%;
+            background-color: #2c3639;
+        }
+        .feedback-circle .axis {
+            position: absolute;
+            background-color: #a27b5c;
+        }
+        .feedback-circle .x-axis {
+            width: 100%;
+            height: 1px;
+            top: 50%;
+            left: 0;
+        }
+        .feedback-circle .y-axis {
+            width: 1px;
+            height: 100%;
+            top: 0;
+            left: 50%;
+        }
+        .axis-label {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #dcd7c9;
+        }
+        .emotion-label {
+            position: absolute;
+            font-size: 12px;
+            color: #dcd7c9;
+            transform: translate(-50%, -50%);
+        }
+        .point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #a27b5c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            display: none;
+        }
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            background-color: #a27b5c;
+            color: #dcd7c9;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #8b6b4f;
+        }
+        .led-strip {
+            width: 100%;
+            height: 50px;
+            background: #2c3639;
+            border-radius: 25px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .led {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: all 0.3s ease;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #dcd7c9;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {transform: rotate(360deg);}
+        }
+        .error-message {
+            color: #ff6b6b;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .success-message {
+            color: #69db7c;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #2c3639;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #a27b5c;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+            color: #dcd7c9;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // No back button handling needed
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="led-panel">
+            <h2>LED Animation</h2>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="progress-text" class="progress-text"></div>
+            <div id="led-strip" class="led-strip"></div>
+            <div id="pattern-message"></div>
+        </div>
+        
+        <div class="feedback-panel">
+            <h2>How does this make you feel?</h2>
+            <div class="feedback-circle">
+                <!-- Axes -->
+                <div class="axis x-axis"></div>
+                <div class="axis y-axis"></div>
+
+                <!-- Axis Labels -->
+                <div class="axis-label" style="top: 50%; left: -10%;">Negative Valence</div>
+                <div class="axis-label" style="top: 50%; left: 95%;">Positive Valence</div>
+                <div class="axis-label" style="top: -5%; left: 38%;">High Arousal</div>
+                <div class="axis-label" style="top: 100%; left: 39%;">Low Arousal</div>
+
+                <!-- Point -->
+                <div class="point" id="feedback-point"></div>
+            </div>
+            <div class="button-container">
+                <button class="button" onclick="skipAnimation()">Skip</button>
+                <button class="button" onclick="submitFeedback()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CSRF token setup for Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // Signal Management
+        let currentSignal = null;
+        let currentAnimation = null;
+        let startTime = null;
+        let selectedPoint = null;
+        const NUM_LEDS = 20;
+
+        // Initialize feedback circle interaction
+        const feedbackCircle = document.querySelector('.feedback-circle');
+        const feedbackPoint = document.getElementById('feedback-point');
+
+        feedbackCircle.addEventListener('click', function(event) {
+            const rect = feedbackCircle.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            // Calculate coordinates relative to circle center
+            const x = event.clientX - rect.left - centerX;
+            const y = event.clientY - rect.top - centerY;
+            
+            // Convert to -1 to 1 range
+            const valence = x / centerX;
+            const arousal = -y / centerY; // Negative because Y is inverted in screen coordinates
+            
+            // Update point position
+            feedbackPoint.style.left = (event.clientX - rect.left) + 'px';
+            feedbackPoint.style.top = (event.clientY - rect.top) + 'px';
+            feedbackPoint.style.display = 'block';
+            
+            // Store selected point
+            selectedPoint = { valence, arousal };
+        });
+
+        async function fetchNextSignal() {
+            try {
+                const response = await fetch('/experiment/next-signal/');
+                const data = await response.json();
+                
+                if (data.complete) {
+                    window.location.href = '/experiment/complete/';
+                    return;
+                }
+                
+                currentSignal = data;
+                updateProgress(data.progress);
+                initializeLEDs();
+                startAnimation(data.pattern);
+                startTime = new Date();
+                
+                // Reset feedback point
+                feedbackPoint.style.display = 'none';
+                selectedPoint = null;
+                
+            } catch (error) {
+                console.error('Error fetching next signal:', error);
+            }
+        }
+
+        function updateProgress(progress) {
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            const percentage = (progress.completed / progress.total) * 100;
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `Progress: ${progress.completed} / ${progress.total}`;
+        }
+
+        function initializeLEDs() {
+            const strip = document.getElementById('led-strip');
+            strip.innerHTML = '';
+            
+            for (let i = 0; i < NUM_LEDS; i++) {
+                const led = document.createElement('div');
+                led.className = 'led';
+                led.style.left = `${(i / NUM_LEDS) * 100}%`;
+                strip.appendChild(led);
+            }
+        }
+
+        function startAnimation(pattern) {
+            if (currentAnimation) {
+                clearInterval(currentAnimation);
+            }
+
+            const leds = document.querySelectorAll('.led');
+            
+            switch (pattern.type) {
+                case 'blink':
+                    animateBlink(leds, pattern);
+                    break;
+                case 'fade':
+                    animateFade(leds, pattern);
+                    break;
+                case 'wave':
+                    animateWave(leds, pattern);
+                    break;
+                case 'pulse':
+                    animatePulse(leds, pattern);
+                    break;
+                case 'rainbow':
+                    animateRainbow(leds, pattern);
+                    break;
+                case 'solid':
+                    animateSolid(leds, pattern);
+                    break;
+            }
+        }
+
+        function animateBlink(leds, pattern) {
+            let isOn = true;
+            currentAnimation = setInterval(() => {
+                leds.forEach(led => {
+                    led.style.backgroundColor = isOn ? pattern.color : '#000000';
+                });
+                isOn = !isOn;
+            }, 1000 / pattern.frequency);
+        }
+
+        function animateFade(leds, pattern) {
+            let step = 0;
+            const steps = pattern.steps;
+            
+            function interpolateColor(start, end, ratio) {
+                const r1 = parseInt(start.slice(1, 3), 16);
+                const g1 = parseInt(start.slice(3, 5), 16);
+                const b1 = parseInt(start.slice(5, 7), 16);
+                
+                const r2 = parseInt(end.slice(1, 3), 16);
+                const g2 = parseInt(end.slice(3, 5), 16);
+                const b2 = parseInt(end.slice(5, 7), 16);
+                
+                const r = Math.round(r1 + (r2 - r1) * ratio);
+                const g = Math.round(g1 + (g2 - g1) * ratio);
+                const b = Math.round(b1 + (b2 - b1) * ratio);
+                
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+            
+            currentAnimation = setInterval(() => {
+                const ratio = step / steps;
+                const color = interpolateColor(pattern.start_color, pattern.end_color, ratio);
+                
+                leds.forEach(led => {
+                    led.style.backgroundColor = color;
+                });
+                
+                step = (step + 1) % (steps + 1);
+            }, pattern.duration / steps);
+        }
+
+        function animateWave(leds, pattern) {
+            let offset = 0;
+            currentAnimation = setInterval(() => {
+                leds.forEach((led, i) => {
+                    const phase = (i + offset) % pattern.wave_length;
+                    const brightness = Math.sin((phase / pattern.wave_length) * Math.PI * 2) * 0.5 + 0.5;
+                    const color = pattern.color;
+                    const rgb = hexToRgb(color);
+                    led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${brightness})`;
+                });
+                offset = (offset + 1) % pattern.wave_length;
+            }, 1000 / (pattern.wave_length * pattern.speed));
+        }
+
+        function animatePulse(leds, pattern) {
+            let phase = 0;
+            currentAnimation = setInterval(() => {
+                const brightness = ((Math.sin(phase) + 1) / 2) * 
+                    (pattern.max_brightness - pattern.min_brightness) + 
+                    pattern.min_brightness;
+                const color = pattern.color;
+                const rgb = hexToRgb(color);
+                
+                leds.forEach(led => {
+                    led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${brightness / 100})`;
+                });
+                
+                phase += (Math.PI * 2 * pattern.pulse_speed) / 60;
+            }, 1000 / 60);
+        }
+
+        function animateRainbow(leds, pattern) {
+            let offset = 0;
+            currentAnimation = setInterval(() => {
+                leds.forEach((led, i) => {
+                    const hue = ((i + offset) / NUM_LEDS) % 1;
+                    const rgb = hslToRgb(hue, 1, pattern.brightness / 100);
+                    led.style.backgroundColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                });
+                offset = (offset + pattern.speed) % NUM_LEDS;
+            }, 1000 / 60);
+        }
+
+        function animateSolid(leds, pattern) {
+            const rgb = hexToRgb(pattern.color);
+            const opacity = pattern.brightness / 100;
+            leds.forEach(led => {
+                led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+            });
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function hslToRgb(h, s, l) {
+            let r, g, b;
+
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                function hue2rgb(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                }
+
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+
+            return {
+                r: Math.round(r * 255),
+                g: Math.round(g * 255),
+                b: Math.round(b * 255)
+            };
+        }
+
+        async function submitFeedback() {
+            if (!selectedPoint) {
+                alert('Please select a point on the feedback circle before proceeding.');
+                return;
+            }
+
+            if (!currentSignal) {
+                console.error('No current signal to submit feedback for');
+                return;
+            }
+
+            const endTime = new Date();
+            const responseTimeMs = endTime - startTime;
+
+            try {
+                const response = await fetch('/experiment/submit-feedback/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        signal_id: currentSignal.signal_id,
+                        valence: selectedPoint.valence,
+                        arousal: selectedPoint.arousal,
+                        response_time_ms: responseTimeMs
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                await fetchNextSignal();
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+            }
+        }
+
+        async function skipAnimation() {
+            if (!currentSignal) {
+                console.error('No current signal to skip');
+                return;
+            }
+
+            const endTime = new Date();
+            const responseTimeMs = endTime - startTime;
+
+            try {
+                const response = await fetch('/experiment/skip-signal/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        signal_id: currentSignal.signal_id,
+                        response_time_ms: responseTimeMs
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                await fetchNextSignal();
+            } catch (error) {
+                console.error('Error skipping animation:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize with first signal
+            fetchNextSignal();
+            
+            // Update progress with initial data
+            const progress = {{ progress|safe }};
+            updateProgress(progress);
+        });
+    </script>
+</body>
+</html>
