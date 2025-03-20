@@ -24,4 +24,10 @@ urlpatterns = [
     path('statistics/<int:experiment_id>/', views.experiment_statistics, name='experiment_statistics'),
     # Test data URLs
     path('create-test-signals/<int:experiment_id>/', views.create_test_signals, name='create_test_signals'),
+    
+    # Genetic Algorithm URLs
+    path('generate-evolved-signals/<int:experiment_id>/', 
+         views.generate_evolved_signals, name='generate_evolved_signals'),
+    path('create-initial-signals/<int:experiment_id>/', 
+         views.create_initial_signals, name='create_initial_signals'),
 ]

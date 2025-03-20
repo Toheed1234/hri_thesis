@@ -107,21 +107,22 @@
         }
         .led-strip {
             width: 100%;
-            height: 50px;
+            height: 80px;
             background: #2c3639;
-            border-radius: 25px;
+            border-radius: 40px;
             position: relative;
             overflow: hidden;
             margin: 20px 0;
         }
         .led {
-            width: 10px;
-            height: 10px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
             transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
         .loading {
             display: inline-block;
@@ -231,7 +232,7 @@
         let currentAnimation = null;
         let startTime = null;
         let selectedPoint = null;
-        const NUM_LEDS = 20;
+        const NUM_LEDS = 8;
 
         // Initialize feedback circle interaction
         const feedbackCircle = document.querySelector('.feedback-circle');
@@ -297,10 +298,18 @@
             const strip = document.getElementById('led-strip');
             strip.innerHTML = '';
             
+            // Calculate spacing between LEDs
+            const ledWidth = 40;  // Width of each LED
+            const stripWidth = strip.offsetWidth;
+            const totalLedSpace = NUM_LEDS * ledWidth;
+            const spacing = (stripWidth - totalLedSpace) / (NUM_LEDS - 1);
+            
             for (let i = 0; i < NUM_LEDS; i++) {
                 const led = document.createElement('div');
                 led.className = 'led';
-                led.style.left = `${(i / NUM_LEDS) * 100}%`;
+                // Position each LED with proper spacing
+                const leftPosition = i * (ledWidth + spacing);
+                led.style.left = `${leftPosition}px`;
                 strip.appendChild(led);
             }
         }
@@ -339,6 +348,7 @@
             currentAnimation = setInterval(() => {
                 leds.forEach(led => {
                     led.style.backgroundColor = isOn ? pattern.color : '#000000';
+                    led.style.boxShadow = isOn ? `0 0 15px ${pattern.color}` : 'none';
                 });
                 isOn = !isOn;
             }, 1000 / pattern.frequency);
@@ -361,15 +371,22 @@
                 const g = Math.round(g1 + (g2 - g1) * ratio);
                 const b = Math.round(b1 + (b2 - b1) * ratio);
                 
-                return `rgb(${r}, ${g}, ${b})`;
+                return { r, g, b };
             }
             
             currentAnimation = setInterval(() => {
-                const ratio = step / steps;
-                const color = interpolateColor(pattern.start_color, pattern.end_color, ratio);
+                let ratio;
+                if (pattern.fade_type === 'sine') {
+                    ratio = (Math.sin((step / steps) * Math.PI * 2) + 1) / 2;
+                } else {
+                    ratio = step / steps;
+                }
+                
+                const rgb = interpolateColor(pattern.start_color, pattern.end_color, ratio);
                 
                 leds.forEach(led => {
-                    led.style.backgroundColor = color;
+                    led.style.backgroundColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                    led.style.boxShadow = `0 0 15px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
                 });
                 
                 step = (step + 1) % (steps + 1);
@@ -378,16 +395,23 @@
 
         function animateWave(leds, pattern) {
             let offset = 0;
+            const totalPositions = NUM_LEDS * 2; // For smoother wave motion
+            
             currentAnimation = setInterval(() => {
                 leds.forEach((led, i) => {
-                    const phase = (i + offset) % pattern.wave_length;
-                    const brightness = Math.sin((phase / pattern.wave_length) * Math.PI * 2) * 0.5 + 0.5;
-                    const color = pattern.color;
-                    const rgb = hexToRgb(color);
+                    // Calculate phase based on LED position and offset
+                    const phase = ((i * 2 + offset) / totalPositions) * Math.PI * 2;
+                    const brightness = Math.sin(phase) * 0.5 + 0.5;  // Convert -1 to 1 range to 0 to 1
+                    
+                    const rgb = hexToRgb(pattern.color);
+                    // Apply brightness to both color and shadow
                     led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${brightness})`;
+                    led.style.boxShadow = `0 0 20px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${brightness * 0.7})`;
                 });
-                offset = (offset + 1) % pattern.wave_length;
-            }, 1000 / (pattern.wave_length * pattern.speed));
+                
+                // Update offset for wave motion
+                offset = (offset + 1) % totalPositions;
+            }, Math.max(1000 / (pattern.speed * 15), 16)); // Ensure smooth animation with minimum 60fps
         }
 
         function animatePulse(leds, pattern) {
@@ -401,6 +425,7 @@
                 
                 leds.forEach(led => {
                     led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${brightness / 100})`;
+                    led.style.boxShadow = `0 0 15px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${brightness / 200})`;
                 });
                 
                 phase += (Math.PI * 2 * pattern.pulse_speed) / 60;
@@ -412,8 +437,9 @@
             currentAnimation = setInterval(() => {
                 leds.forEach((led, i) => {
                     const hue = ((i + offset) / NUM_LEDS) % 1;
-                    const rgb = hslToRgb(hue, 1, pattern.brightness / 100);
+                    const rgb = hslToRgb(hue, pattern.saturation / 100, pattern.brightness / 100);
                     led.style.backgroundColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                    led.style.boxShadow = `0 0 15px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
                 });
                 offset = (offset + pattern.speed) % NUM_LEDS;
             }, 1000 / 60);
@@ -424,7 +450,20 @@
             const opacity = pattern.brightness / 100;
             leds.forEach(led => {
                 led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+                led.style.boxShadow = `0 0 15px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity * 0.5})`;
             });
+            
+            if (pattern.pulse_subtle) {
+                let phase = 0;
+                currentAnimation = setInterval(() => {
+                    const pulseOpacity = opacity * (0.8 + Math.sin(phase) * 0.2);
+                    leds.forEach(led => {
+                        led.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${pulseOpacity})`;
+                        led.style.boxShadow = `0 0 15px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${pulseOpacity * 0.5})`;
+                    });
+                    phase += Math.PI / 30;
+                }, 1000 / 30);
+            }
         }
 
         function hexToRgb(hex) {

@@ -15,6 +15,7 @@ class Signal(models.Model):
     name = models.CharField(max_length=100)
     pattern = models.JSONField()
     signal_file = models.FileField(upload_to='signals/', blank=True, null=True)
+    generation = models.IntegerField(default=0, help_text='Generation number for evolved signals')
 
     def __str__(self):
         return f"{self.name} - {self.experiment.name}"

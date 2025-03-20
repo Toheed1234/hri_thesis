@@ -5,16 +5,16 @@ import colorsys
 class GestureGenerator:
     def __init__(self):
         self.default_duration = 5000  # Default duration in milliseconds
-        self.default_num_leds = 30    # Default number of LEDs in strip
+        self.default_num_leds = 8    # Default number of LEDs in strip
 
     def generate_pattern(self, pattern_type, parameters=None):
         """Generate LED pattern based on type and parameters."""
         if parameters is None:
             parameters = {}
 
-        # Set default parameters if not provided
-        duration = parameters.get('duration', self.default_duration)
-        num_leds = parameters.get('num_leds', self.default_num_leds)
+        # Always enforce 8 LEDs
+        parameters['num_leds'] = 8
+        parameters['duration'] = parameters.get('duration', self.default_duration)
 
         pattern_functions = {
             'blink': self._generate_blink_pattern,
@@ -28,90 +28,77 @@ class GestureGenerator:
         if pattern_type not in pattern_functions:
             raise ValueError(f"Unknown pattern type: {pattern_type}")
 
-        return pattern_functions[pattern_type](duration, num_leds, parameters)
+        pattern = pattern_functions[pattern_type](parameters['duration'], parameters['num_leds'], parameters)
+        pattern['type'] = pattern_type  # Ensure type is always set
+        return pattern
 
     def _generate_blink_pattern(self, duration, num_leds, parameters):
         """Generate a blinking pattern."""
-        color = parameters.get('color', '#FF0000')  # Default to red
-        frequency = parameters.get('frequency', 2)   # Blinks per second
-
         return {
             'type': 'blink',
-            'color': color,
-            'frequency': frequency,
+            'color': parameters.get('color', '#FF0000'),
+            'frequency': parameters.get('frequency', 2.0),
+            'duty_cycle': parameters.get('duty_cycle', 0.4),
             'duration': duration,
             'num_leds': num_leds
         }
 
     def _generate_fade_pattern(self, duration, num_leds, parameters):
         """Generate a fading pattern."""
-        start_color = parameters.get('start_color', '#000000')
-        end_color = parameters.get('end_color', '#FFFFFF')
-        steps = parameters.get('steps', 50)
-
         return {
             'type': 'fade',
-            'start_color': start_color,
-            'end_color': end_color,
-            'steps': steps,
+            'start_color': parameters.get('start_color', '#000000'),
+            'end_color': parameters.get('end_color', '#FFFFFF'),
+            'steps': parameters.get('steps', 20),
+            'fade_type': parameters.get('fade_type', 'linear'),
             'duration': duration,
             'num_leds': num_leds
         }
 
     def _generate_wave_pattern(self, duration, num_leds, parameters):
         """Generate a wave pattern."""
-        color = parameters.get('color', '#0000FF')  # Default to blue
-        wave_length = parameters.get('wave_length', num_leds // 3)
-        speed = parameters.get('speed', 1)  # Waves per second
-
         return {
             'type': 'wave',
-            'color': color,
-            'wave_length': wave_length,
-            'speed': speed,
+            'color': parameters.get('color', '#0000FF'),
+            'wave_length': parameters.get('wave_length', 4),
+            'speed': parameters.get('speed', 1.0),
+            'wave_type': parameters.get('wave_type', 'sine'),
             'duration': duration,
             'num_leds': num_leds
         }
 
     def _generate_pulse_pattern(self, duration, num_leds, parameters):
         """Generate a pulsing pattern."""
-        color = parameters.get('color', '#FF0000')  # Default to red
-        pulse_speed = parameters.get('pulse_speed', 1)  # Pulses per second
-        min_brightness = parameters.get('min_brightness', 0)
-        max_brightness = parameters.get('max_brightness', 100)
-
         return {
             'type': 'pulse',
-            'color': color,
-            'pulse_speed': pulse_speed,
-            'min_brightness': min_brightness,
-            'max_brightness': max_brightness,
+            'color': parameters.get('color', '#FF0000'),
+            'pulse_speed': parameters.get('pulse_speed', 1.0),
+            'min_brightness': parameters.get('min_brightness', 5),
+            'max_brightness': parameters.get('max_brightness', 100),
+            'pulse_type': parameters.get('pulse_type', 'sine'),
             'duration': duration,
             'num_leds': num_leds
         }
 
     def _generate_rainbow_pattern(self, duration, num_leds, parameters):
         """Generate a rainbow pattern."""
-        speed = parameters.get('speed', 1)  # Rotations per second
-        brightness = parameters.get('brightness', 100)
-
         return {
             'type': 'rainbow',
-            'speed': speed,
-            'brightness': brightness,
+            'speed': parameters.get('speed', 1.0),
+            'brightness': parameters.get('brightness', 100),
+            'saturation': parameters.get('saturation', 100),
+            'pattern': parameters.get('pattern', 'cycle'),
             'duration': duration,
             'num_leds': num_leds
         }
 
     def _generate_solid_pattern(self, duration, num_leds, parameters):
         """Generate a solid color pattern."""
-        color = parameters.get('color', '#FFFFFF')  # Default to white
-        brightness = parameters.get('brightness', 100)
-
         return {
             'type': 'solid',
-            'color': color,
-            'brightness': brightness,
+            'color': parameters.get('color', '#FFFFFF'),
+            'brightness': parameters.get('brightness', 100),
+            'pulse_subtle': parameters.get('pulse_subtle', False),
             'duration': duration,
             'num_leds': num_leds
         }

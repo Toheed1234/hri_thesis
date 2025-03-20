@@ -1,0 +1,130 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block content %}
+<div id="content-main">
+    <form id="generate-patterns-form" method="post">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <h2>Generate Patterns for {{ experiment.name }}</h2>
+            <div class="form-row">
+                <div class="field-box">
+                    <label for="valence">Valence (-1 to 1):</label>
+                    <input type="range" id="valence" name="valence" min="-1" max="1" step="0.1" value="0" 
+                           oninput="document.getElementById('valence-value').textContent = this.value">
+                    <span id="valence-value">0</span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field-box">
+                    <label for="arousal">Arousal (-1 to 1):</label>
+                    <input type="range" id="arousal" name="arousal" min="-1" max="1" step="0.1" value="0"
+                           oninput="document.getElementById('arousal-value').textContent = this.value">
+                    <span id="arousal-value">0</span>
+                </div>
+            </div>
+        </fieldset>
+        <div class="submit-row">
+            <input type="submit" value="Generate Patterns" class="default" name="_save">
+        </div>
+    </form>
+</div>
+
+<style>
+.field-box {
+    margin: 20px 0;
+}
+.field-box label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.field-box input[type="range"] {
+    width: 300px;
+    margin-right: 10px;
+}
+#valence-value, #arousal-value {
+    display: inline-block;
+    min-width: 30px;
+}
+.message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+.success {
+    background-color: #dff0d8;
+    color: #3c763d;
+    border: 1px solid #d6e9c6;
+}
+.error {
+    background-color: #f2dede;
+    color: #a94442;
+    border: 1px solid #ebccd1;
+}
+</style>
+
+<script>
+document.getElementById('generate-patterns-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+    const submitButton = form.querySelector('input[type="submit"]');
+    submitButton.disabled = true;
+    
+    // Get CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'  // This is important for CSRF
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Create success message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message success';
+        messageDiv.textContent = `Successfully generated ${data.signals ? data.signals.length : 0} patterns!`;
+        form.insertBefore(messageDiv, form.firstChild);
+        
+        // Redirect to patterns list after 2 seconds
+        setTimeout(() => {
+            window.location.href = "{% url 'admin:experiment_signal_changelist' %}";
+        }, 2000);
+    })
+    .catch(error => {
+        // Create error message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message error';
+        messageDiv.textContent = `Error: ${error.message}`;
+        form.insertBefore(messageDiv, form.firstChild);
+    })
+    .finally(() => {
+        submitButton.disabled = false;
+    });
+});
+</script>
+{% endblock %} 
